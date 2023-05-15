@@ -406,7 +406,54 @@ class OrderAddressFullTable(FullTableStream):
                 response['OrderLastUpdateDate'] = date
 
                 yield from [response]
-class VendorPurchaseOrders(FullTableStream):
+class VendorPurchaseOrdersFullTable(FullTableStream):
+    """
+    Gets records for vendor purchase order stream.
+    The date range to search must not be more than 7 days
+    """
+    tap_stream_id = 'vendor_purchase_orders'
+    # key_properties = ['AmazonOrderId']
+    replication_key = 'purchaseOrderNumber'
+    valid_replication_keys = ['purchaseOrderNumber']
+
+    @staticmethod
+    @backoff.on_exception(backoff.expo,
+                          SellingApiRequestThrottledException,
+                          max_tries=5,
+                          base=3,
+                          factor=10,
+                          on_backoff=log_backoff)
+    def get_vendor_purchase_orders(client: VendorOrders, start_date, next_token, timer, end_date):
+        try:
+            response = client.get_purchase_orders(createdAfter=start_date, createdBefore=end_date, nextToken=next_token)
+            timer.tags[metrics.Tag.http_status_code] = 200
+            return response
+        except SellingApiRequestThrottledException as e:
+            timer.tags[metrics.Tag.http_status_code] = 429
+            raise e
+
+    def get_records(self, start_date: str, end_date: str, marketplace) -> list:
+
+        credentials = self.get_credentials()
+        start_date = format_date(start_date)
+        if end_date:
+            end_date = format_date(end_date)
+
+        LOGGER.info(f"Getting vendor_purchase_orders records for marketplace: {marketplace.name}")
+
+        client = VendorOrders(credentials=credentials, marketplace=marketplace)
+        paginate = True
+        next_token = None
+
+        with metrics.http_request_timer('/vendor/orders/v1/purchaseOrders') as timer:
+            while paginate:
+                response = self.get_vendor_purchase_orders(client, start_date, next_token, timer, end_date=end_date)
+
+                next_token = response.next_token
+                paginate = True if next_token else False
+
+                yield from response.payload['orders']
+class VendorPurchaseOrders(IncrementalStream):
     """
     Gets records for vendor purchase order stream.
     The date range to search must not be more than 7 days
@@ -703,6 +750,7 @@ STREAMS = {
     'order_buyer_info': OrderBuyerInfo,
     'order_address': OrderAddress,
     'sales': SalesStream,
+    'vendor_purchase_orders': VendorPurchaseOrders,
 }
 
 def StreamClassSelector(config, stream):
@@ -713,7 +761,7 @@ def StreamClassSelector(config, stream):
         'order_items': OrderItemsFullTable,
         'order_buyer_info': OrderBuyerInfoFullTable,
         'order_address': OrderAddressFullTable,
-        'vendor_purchase_orders': VendorPurchaseOrders,
+        'vendor_purchase_orders': VendorPurchaseOrdersFullTable,
     }
 
     if stream.replication_method == 'FULL_TABLE':

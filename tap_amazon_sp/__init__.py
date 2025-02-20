@@ -4,15 +4,7 @@ from singer import utils
 from tap_amazon_sp.discover import discover
 from tap_amazon_sp.sync import sync
 
-REQUIRED_CONFIG_KEYS = [
-    "refresh_token",
-    "client_id",
-    "client_secret",
-    "aws_access_key",
-    "aws_secret_key",
-    "role_arn",
-    "start_date",
-]
+REQUIRED_CONFIG_KEYS = ["refresh_token", "client_id", "client_secret"]
 LOGGER = singer.get_logger()
 
 

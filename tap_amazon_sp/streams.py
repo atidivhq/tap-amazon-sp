@@ -74,9 +74,9 @@ class BaseStream:
             'refresh_token': self.config['refresh_token'],
             'lwa_app_id': self.config['client_id'],
             'lwa_client_secret': self.config['client_secret'],
-            'aws_access_key': self.config['aws_access_key'],
-            'aws_secret_key': self.config['aws_secret_key'],
-            'role_arn': self.config['role_arn'],
+            # 'aws_access_key': self.config['aws_access_key'],
+            # 'aws_secret_key': self.config['aws_secret_key'],
+            # 'role_arn': self.config['role_arn'],
         }
 
     def get_marketplaces(self) -> List[Marketplaces]:
@@ -747,10 +747,10 @@ class SalesStream(IncrementalStream):
 STREAMS = {
     'orders': OrdersStream,
     'order_items': OrderItems,
-    'order_buyer_info': OrderBuyerInfo,
-    'order_address': OrderAddress,
+    # 'order_buyer_info': OrderBuyerInfo,
+    # 'order_address': OrderAddress,
     'sales': SalesStream,
-    'vendor_purchase_orders': VendorPurchaseOrders,
+    # 'vendor_purchase_orders': VendorPurchaseOrders,
 }
 
 def StreamClassSelector(config, stream):

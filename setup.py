@@ -15,18 +15,12 @@ setup(
     url="http://singer.io",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_amazon_sp"],
-    install_requires=[
-        'backoff==1.8.0',
-        'singer-python==5.12.2',
-        'python-amazon-sp-api==0.18.2'
-    ],
+    install_requires=["backoff==2.2.1", "singer-python==6.1.0", "python-amazon-sp-api==1.9.12"],
     entry_points="""
     [console_scripts]
     tap-amazon-sp=tap_amazon_sp:main
     """,
     packages=find_packages(exclude=["tests"]),
-    package_data = {
-        "schemas": ["tap_amazon_sp/schemas/*.json"]
-    },
+    package_data={"schemas": ["tap_amazon_sp/schemas/*.json"]},
     include_package_data=True,
 )

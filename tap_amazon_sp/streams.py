@@ -762,10 +762,10 @@ class SalesStream(IncrementalStream):
 STREAMS = {
     'orders': OrdersStream,
     'order_items': OrderItems,
-    # 'order_buyer_info': OrderBuyerInfo,
-    # 'order_address': OrderAddress,
+    'order_buyer_info': OrderBuyerInfo,
+    'order_address': OrderAddress,
     'sales': SalesStream,
-    # 'vendor_purchase_orders': VendorPurchaseOrders,
+    'vendor_purchase_orders': VendorPurchaseOrders,
 }
 
 def StreamClassSelector(config, stream):

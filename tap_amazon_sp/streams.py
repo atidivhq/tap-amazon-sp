@@ -726,7 +726,7 @@ class SalesStream(IncrementalStream):
 
             raise e
 
-    def get_records(self, start_date, marketplace, is_parent=False):
+    def get_records(self, start_date, end_date, marketplace, is_parent=False):
 
         credentials = self.get_credentials()
         granularity = self.get_granularity()
@@ -735,7 +735,7 @@ class SalesStream(IncrementalStream):
         end_date_dt = datetime.datetime.utcnow()
         end_date = end_date_dt.isoformat()
 
-        LOGGER.info(f"Getting records for marketplace: {marketplace}")
+        LOGGER.info(f"Getting records for marketplace: {marketplace.name}")
 
         client = Sales(credentials=credentials, marketplace=marketplace)
         paginate = True

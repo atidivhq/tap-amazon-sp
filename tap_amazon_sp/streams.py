@@ -269,6 +269,9 @@ class OrdersStreamFullTable(FullTableStream):
                 next_token = response.next_token
                 paginate = True if next_token else False
 
+                sleep_time = calculate_sleep_time(response.headers)
+                time.sleep(sleep_time)
+
                 if is_parent:
                     yield from ((item['AmazonOrderId'], item['LastUpdateDate'])
                                 for item in response.payload['Orders'])
@@ -452,6 +455,10 @@ class VendorPurchaseOrdersFullTable(FullTableStream):
                 next_token = response.next_token
                 paginate = True if next_token else False
 
+                # Adding dynamic sleep as per rate limit from Amazon
+                sleep_time = calculate_sleep_time(response.headers)
+                time.sleep(sleep_time)
+
                 yield from response.payload['orders']
 class VendorPurchaseOrders(IncrementalStream):
     """
@@ -552,6 +559,10 @@ class OrdersStream(IncrementalStream):
 
                 next_token = response.next_token
                 paginate = True if next_token else False
+
+                # Adding dynamic sleep as per rate limit from Amazon
+                sleep_time = calculate_sleep_time(response.headers)
+                time.sleep(sleep_time)
 
                 if is_parent:
                     yield from ((item['AmazonOrderId'], item['LastUpdateDate'])
@@ -737,6 +748,10 @@ class SalesStream(IncrementalStream):
 
                 next_token = response.next_token
                 paginate = True if next_token else False
+
+                # Adding dynamic sleep as per rate limit from Amazon
+                sleep_time = calculate_sleep_time(response.headers)
+                time.sleep(sleep_time)
 
                 for record in response.payload:
                     record.update({'retrieved': end_date})

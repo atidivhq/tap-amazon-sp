@@ -74,9 +74,9 @@ class BaseStream:
             'refresh_token': self.config['refresh_token'],
             'lwa_app_id': self.config['client_id'],
             'lwa_client_secret': self.config['client_secret'],
-            'aws_access_key': self.config['aws_access_key'],
-            'aws_secret_key': self.config['aws_secret_key'],
-            'role_arn': self.config['role_arn'],
+            # 'aws_access_key': self.config['aws_access_key'],
+            # 'aws_secret_key': self.config['aws_secret_key'],
+            # 'role_arn': self.config['role_arn'],
         }
 
     def get_marketplaces(self) -> List[Marketplaces]:
@@ -269,6 +269,9 @@ class OrdersStreamFullTable(FullTableStream):
                 next_token = response.next_token
                 paginate = True if next_token else False
 
+                sleep_time = calculate_sleep_time(response.headers)
+                time.sleep(sleep_time)
+
                 if is_parent:
                     yield from ((item['AmazonOrderId'], item['LastUpdateDate'])
                                 for item in response.payload['Orders'])
@@ -452,6 +455,10 @@ class VendorPurchaseOrdersFullTable(FullTableStream):
                 next_token = response.next_token
                 paginate = True if next_token else False
 
+                # Adding dynamic sleep as per rate limit from Amazon
+                sleep_time = calculate_sleep_time(response.headers)
+                time.sleep(sleep_time)
+
                 yield from response.payload['orders']
 class VendorPurchaseOrders(IncrementalStream):
     """
@@ -552,6 +559,10 @@ class OrdersStream(IncrementalStream):
 
                 next_token = response.next_token
                 paginate = True if next_token else False
+
+                # Adding dynamic sleep as per rate limit from Amazon
+                sleep_time = calculate_sleep_time(response.headers)
+                time.sleep(sleep_time)
 
                 if is_parent:
                     yield from ((item['AmazonOrderId'], item['LastUpdateDate'])
@@ -715,7 +726,7 @@ class SalesStream(IncrementalStream):
 
             raise e
 
-    def get_records(self, start_date, marketplace, is_parent=False):
+    def get_records(self, start_date, end_date, marketplace, is_parent=False):
 
         credentials = self.get_credentials()
         granularity = self.get_granularity()
@@ -724,7 +735,7 @@ class SalesStream(IncrementalStream):
         end_date_dt = datetime.datetime.utcnow()
         end_date = end_date_dt.isoformat()
 
-        LOGGER.info(f"Getting records for marketplace: {marketplace}")
+        LOGGER.info(f"Getting records for marketplace: {marketplace.name}")
 
         client = Sales(credentials=credentials, marketplace=marketplace)
         paginate = True
@@ -737,6 +748,10 @@ class SalesStream(IncrementalStream):
 
                 next_token = response.next_token
                 paginate = True if next_token else False
+
+                # Adding dynamic sleep as per rate limit from Amazon
+                sleep_time = calculate_sleep_time(response.headers)
+                time.sleep(sleep_time)
 
                 for record in response.payload:
                     record.update({'retrieved': end_date})

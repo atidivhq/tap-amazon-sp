@@ -7,7 +7,7 @@ from typing import List
 import backoff
 import singer
 from singer import Transformer, metrics
-from sp_api.api import Orders, Sales, VendorOrders
+from sp_api.api import Orders, Sales, VendorOrders, Inventories
 from sp_api.base.exceptions import SellingApiRequestThrottledException
 from sp_api.base.marketplaces import Marketplaces
 from sp_api.base.sales_enum import Granularity
@@ -703,6 +703,55 @@ class OrderAddress(IncrementalStream):
 
                 yield from [response]
                 
+class FBAInventoryStream(IncrementalStream):
+    """
+    Gets records for order buyer info stream.
+    """
+    tap_stream_id = 'fba_inventory'
+    # key_properties = ['AmazonOrderId']
+    replication_key = 'lastUpdatedTime'
+    valid_replication_keys = ['lastUpdatedTime']
+
+    @staticmethod
+    @backoff.on_exception(backoff.expo,
+                          SellingApiRequestThrottledException,
+                          max_tries=5,
+                          base=3,
+                          factor=10,
+                          on_backoff=log_backoff)
+    def get_fba_inventory(client: Inventories, start_date: str, marketplace_id: str, next_token, timer):
+        try:
+            response = client.get_inventory_summary_marketplace(startDateTime=start_date, marketplaceIds=[marketplace_id], nextToken=next_token)
+            timer.tags[metrics.Tag.http_status_code] = 200
+            return response
+        except SellingApiRequestThrottledException as e:
+            timer.tags[metrics.Tag.http_status_code] = 429
+            raise e
+
+    def get_records(self, start_date: str, end_date: str, marketplace) -> list:
+        credentials = self.get_credentials()
+        start_date = format_date(start_date)
+
+        LOGGER.info(f"Getting records for marketplace: {marketplace.name}")
+
+        client = Inventories(credentials=credentials, marketplace=marketplace)
+        paginate = True
+        next_token = None
+
+        with metrics.http_request_timer('/fba/inventory/v1/summaries') as timer:
+            while paginate:
+                response = self.get_fba_inventory(client, start_date, marketplace.value[1], next_token, timer)
+                timer.tags[metrics.Tag.http_status_code] = 200
+
+                next_token = response.pagination.get('nextToken',None) if response.pagination else None
+                paginate = True if next_token else False
+                
+                # Adding dynamic sleep as per rate limit from Amazon
+                sleep_time = calculate_sleep_time(response.headers)
+                time.sleep(sleep_time)
+
+                yield from response.payload['inventorySummaries']
+                
 class SalesStream(IncrementalStream):
     """
     Gets records for sales stream.
@@ -766,6 +815,7 @@ STREAMS = {
     'order_address': OrderAddress,
     'sales': SalesStream,
     'vendor_purchase_orders': VendorPurchaseOrders,
+    'fba_inventory': FBAInventoryStream,
 }
 
 def StreamClassSelector(config, stream):

@@ -115,3 +115,7 @@ generate_schema.py
 
 # CSV files
 .csv
+
+# rough
+config.json
+.venv

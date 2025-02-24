@@ -1,0 +1,82 @@
+{
+    "streams": [
+        {
+            "tap_stream_id": "fba_inventory",
+            "replication_key": "lastUpdatedTime",
+            "replication_method": "INCREMENTAL",
+            "schema": {
+                "asin": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "fnSku": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "sellerSku": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "condition": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "lastUpdatedTime": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "productName": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "totalQuantity": {
+                    "type": [
+                        "null",
+                        "integer"
+                    ]
+                },
+                "stores": {
+                    "items": {
+                        "type": [
+                            "null",
+                            "string"
+                        ]
+                    },
+                    "type": [
+                        "null",
+                        "array"
+                    ]
+                }
+            },
+            "stream": "fba_inventory",
+            "metadata": [
+                {
+                    "breadcrumb": [],
+                    "metadata": {
+                        "selected": true,
+                        "table-key-properties": [
+                            "asin"
+                        ],
+                        "forced-replication-method": "INCREMENTAL",
+                        "valid-replication-keys": [
+                            "lastUpdatedTime"
+                        ],
+                        "inclusion": "available"
+                    }
+                }
+            ]
+        }
+    ]
+}
